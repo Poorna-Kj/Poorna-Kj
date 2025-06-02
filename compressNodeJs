@@ -1,0 +1,30 @@
+const express = require('express');
+const app = express();
+const zlib = require('zlib');
+
+app.use(express.raw({ type: '*/*', limit: '20mb' })); // accept raw binary data, max 20MB
+
+app.post('/compress', (req, res) => {
+  const inputBuffer = req.body;
+
+  if (!inputBuffer || inputBuffer.length === 0) {
+    return res.status(400).send('No data received');
+  }
+
+  // Compress using gzip
+  zlib.gzip(inputBuffer, (err, compressedBuffer) => {
+    if (err) {
+      console.error('Compression error:', err);
+      return res.status(500).send('Compression failed');
+    }
+
+    // Send back base64 encoded compressed file
+    const base64Compressed = compressedBuffer.toString('base64');
+    res.status(200).send(base64Compressed);
+  });
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Compression API listening on port ${PORT}`);
+});
